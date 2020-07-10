@@ -2,14 +2,12 @@ package core
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"image"
-	"os"
-	"os/signal"
-	"syscall"
+	"image/jpeg"
 	"time"
 
-	ljpeg "github.com/pixiv/go-libjpeg/jpeg"
 	screenshot "github.com/vova616/screenshot"
 )
 
@@ -17,7 +15,7 @@ import (
 var Images chan *bytes.Buffer
 
 // Done xxx
-var Done bool = false
+var Done chan bool
 
 //CaptureScreenMust xxx
 func CaptureScreenMust() *image.RGBA {
@@ -36,24 +34,20 @@ func CaptureScreenMust() *image.RGBA {
 
 //StartShot xxx
 func StartShot() {
-
-	fc := &FileConvertor{
-		src: Images,
-	}
-	sigs := make(chan os.Signal, 1)
-	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
-	<-sigs
-	fc.Stop()
+	Images = make(chan *bytes.Buffer, 10)
 	stdInterval := float64(1.0 / float64(FPS))
 	timeToSleep := stdInterval
 	s := time.Now()
+	Done = make(chan bool, 1)
 	for {
-		if Done {
+		select {
+		case <-Done:
 			return
+		default:
 		}
 		img := CaptureScreenMust()
 		sio := bytes.NewBufferString("")
-		err := ljpeg.Encode(sio, img, &ljpeg.EncoderOptions{Quality: Quality})
+		err := jpeg.Encode(sio, img, &jpeg.Options{Quality: Quality})
 		if err == nil {
 			Images <- sio
 		}
@@ -73,4 +67,10 @@ func StartShot() {
 		fmt.Printf("sleep: %v", sleepTime)
 	}
 
+}
+
+//Stopshot xxx
+func Stopshot(ctx context.Context) error {
+	Done <- true
+	return nil
 }

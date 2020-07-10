@@ -17,6 +17,10 @@ package cmd
 
 import (
 	"fmt"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	"github.com/spf13/cobra"
 	"gitlab.eazytec-cloud.com/zhanglv/peepingbot/core"
@@ -33,8 +37,27 @@ Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("record called")
-		core.StartShot()
+		core.FPS = 30
+		core.Alpha = 15
+		core.Quality = 75
+		go core.StartShot()
+		go func() {
+			fc := &core.FileConvertor{}
+			fc.Init("test.avi")
+			fc.Start()
+		}()
+		sigs := make(chan os.Signal, 1)
+		signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+		for {
+			select {
+			case <-sigs:
+				fmt.Println("begin shutdown......")
+				core.Done <- true
+				time.Sleep(5 * time.Second)
+				os.Exit(0)
+			default:
+			}
+		}
 	},
 }
 

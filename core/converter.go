@@ -18,20 +18,23 @@ type FileConvertor struct {
 	aw  mjpeg.AviWriter
 }
 
-//Start xx
-func (fc *FileConvertor) Start() error {
-	aw, err := mjpeg.New("test.avi", 200, 100, 2)
-	fc.aw = aw
-	if err != nil {
-		return err
-	}
-	for data := range fc.src {
-		aw.AddFrame(data.Bytes())
-	}
-	return nil
+//Init xxxxx
+func (fc *FileConvertor) Init(filename string) error {
+	fc.src = Images
+	var err error
+	fc.aw, err = mjpeg.New(filename, 640, 480, FPS)
+	return err
 }
 
-//Stop xxx
-func (fc *FileConvertor) Stop() error {
-	return fc.aw.Close()
+//Start xx
+func (fc *FileConvertor) Start() error {
+	for {
+		select {
+		case <-Done:
+			return fc.aw.Close()
+		case data := <-fc.src:
+			fc.aw.AddFrame(data.Bytes())
+		}
+
+	}
 }

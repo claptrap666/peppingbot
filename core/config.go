@@ -1,7 +1,7 @@
 package core
 
 //FPS record FPS
-var FPS int
+var FPS int32
 
 //Quality xxx
 var Quality int
