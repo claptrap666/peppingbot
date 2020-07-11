@@ -17,22 +17,36 @@ package cmd
 
 import (
 	"fmt"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	"github.com/spf13/cobra"
+	"gitlab.eazytec-cloud.com/zhanglv/peepingbot/core"
 )
 
 // streamCmd represents the stream command
 var streamCmd = &cobra.Command{
 	Use:   "stream",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+	Short: "stream screen as rtmp",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("stream called")
+		core.FPS = 30
+		core.Alpha = 15
+		core.Quality = 75
+		go core.StartShot()
+		sigs := make(chan os.Signal, 1)
+		signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+		for {
+			select {
+			case <-sigs:
+				fmt.Println("begin shutdown......")
+				core.Done <- true
+				time.Sleep(5 * time.Second)
+				os.Exit(0)
+			default:
+			}
+		}
 	},
 }
 
