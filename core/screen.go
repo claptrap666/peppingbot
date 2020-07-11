@@ -35,7 +35,7 @@ func CaptureScreenMust() *image.RGBA {
 //StartShot xxx
 func StartShot() {
 	Images = make(chan *bytes.Buffer, 10)
-	stdInterval := float64(1.0 / float64(FPS))
+	stdInterval := float64(1.0 / float64(Config.FPS))
 	timeToSleep := stdInterval
 	s := time.Now()
 	Done = make(chan bool, 1)
@@ -47,16 +47,16 @@ func StartShot() {
 		}
 		img := CaptureScreenMust()
 		sio := bytes.NewBufferString("")
-		err := jpeg.Encode(sio, img, &jpeg.Options{Quality: Quality})
+		err := jpeg.Encode(sio, img, &jpeg.Options{Quality: Config.Quality})
 		if err == nil {
 			Images <- sio
 		}
 		ss := time.Now()
 		interval := ss.Sub(s)
 		if interval.Seconds() < stdInterval {
-			timeToSleep += float64(Alpha) * timeToSleep / float64(100)
+			timeToSleep += float64(Config.Alpha) * timeToSleep / float64(100)
 		} else {
-			timeToSleep -= float64(Alpha) * timeToSleep / float64(100)
+			timeToSleep -= float64(Config.Alpha) * timeToSleep / float64(100)
 		}
 		if timeToSleep < float64(0) {
 			timeToSleep = float64(0)

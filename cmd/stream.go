@@ -31,9 +31,9 @@ var streamCmd = &cobra.Command{
 	Use:   "stream",
 	Short: "stream screen as rtmp",
 	Run: func(cmd *cobra.Command, args []string) {
-		core.FPS = 30
-		core.Alpha = 15
-		core.Quality = 75
+		core.Config.FPS = 30
+		core.Config.Alpha = 15
+		core.Config.Quality = 75
 		go core.StartShot()
 		sigs := make(chan os.Signal, 1)
 		signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)

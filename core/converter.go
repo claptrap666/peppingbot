@@ -22,7 +22,7 @@ type FileConvertor struct {
 func (fc *FileConvertor) Init(filename string) error {
 	fc.src = Images
 	var err error
-	fc.aw, err = mjpeg.New(filename, 640, 480, FPS)
+	fc.aw, err = mjpeg.New(filename, 640, 480, Config.FPS)
 	return err
 }
 

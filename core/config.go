@@ -1,21 +1,21 @@
 package core
 
-//FPS record FPS
-var FPS int32
+//Config all configs
+var Config config
 
-//Quality xxx
-var Quality int
-
-//Alpha xx
-var Alpha int
-var Left int
-var Top int
-var Width int
-var Height int
-var ResizeWidth int
-var ResizeHeight int
-var ToSBS bool
-var Cursor bool
-var FullScreen bool
-var Convert int
-var WindowId int64
+type config struct {
+	Quality      int
+	FPS          int32
+	Alpha        int
+	Left         int
+	Top          int
+	Width        int
+	Height       int
+	ResizeWidth  int
+	ResizeHeight int
+	ToSBS        bool
+	Cursor       bool
+	FullScreen   bool
+	Convert      int
+	WindowID     int64
+}

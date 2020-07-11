@@ -31,9 +31,9 @@ var recordCmd = &cobra.Command{
 	Use:   "record",
 	Short: "start to record screen stop to afile",
 	Run: func(cmd *cobra.Command, args []string) {
-		core.FPS = 30
-		core.Alpha = 15
-		core.Quality = 75
+		core.Config.FPS = 30
+		core.Config.Alpha = 15
+		core.Config.Quality = 75
 		go core.StartShot()
 		go func() {
 			fc := &core.FileConvertor{}
