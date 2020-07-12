@@ -34,14 +34,15 @@ var streamCmd = &cobra.Command{
 		core.Config.FPS = 30
 		core.Config.Alpha = 15
 		core.Config.Quality = 75
-		go core.StartShot()
+		go func() {
+			//TODO: start shooter
+		}()
 		sigs := make(chan os.Signal, 1)
 		signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 		for {
 			select {
 			case <-sigs:
 				fmt.Println("begin shutdown......")
-				core.Done <- true
 				time.Sleep(5 * time.Second)
 				os.Exit(0)
 			default:

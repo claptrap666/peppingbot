@@ -16,12 +16,14 @@ limitations under the License.
 package cmd
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
+	"github.com/kbinani/screenshot"
 	"github.com/spf13/cobra"
 	"gitlab.eazytec-cloud.com/zhanglv/peepingbot/core"
 )
@@ -34,19 +36,40 @@ var recordCmd = &cobra.Command{
 		core.Config.FPS = 30
 		core.Config.Alpha = 15
 		core.Config.Quality = 75
-		go core.StartShot()
-		go func() {
-			fc := &core.FileConvertor{}
-			fc.Init("test.avi")
-			fc.Start()
-		}()
+		n := screenshot.NumActiveDisplays()
+		var done [10]chan bool
+		var images [10]chan *bytes.Buffer
+		var shooters [10]*core.Shooter
+		var converters [10]*core.FileConvertor
+		for i := 0; i < n; i++ {
+			done[i] = make(chan bool, 1)
+			images[i] = make(chan *bytes.Buffer, 10)
+			shooters[i] = &core.Shooter{
+				Images: images[i],
+				Done:   done[i],
+			}
+			converters[i] = &core.FileConvertor{
+				Src:  images[i],
+				Done: done[i],
+			}
+			converters[i].Init(fmt.Sprintf("test%d.avi", i))
+			go func(index int) {
+				shooters[index].Start(index)
+			}(i)
+			go func(index int) {
+				converters[index].Start()
+			}(i)
+		}
+
 		sigs := make(chan os.Signal, 1)
 		signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 		for {
 			select {
 			case <-sigs:
 				fmt.Println("begin shutdown......")
-				core.Done <- true
+				for i := 0; i < n; i++ {
+					done[i] <- true
+				}
 				time.Sleep(5 * time.Second)
 				os.Exit(0)
 			default:

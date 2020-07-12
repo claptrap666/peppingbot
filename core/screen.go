@@ -8,22 +8,22 @@ import (
 	"image/jpeg"
 	"time"
 
-	screenshot "github.com/vova616/screenshot"
+	screenshot "github.com/kbinani/screenshot"
 )
 
-//Images xxx
-var Images chan *bytes.Buffer
+//Shooter xxx
+type Shooter struct {
+	Images chan *bytes.Buffer
+	Done   chan bool
+}
 
-// Done xxx
-var Done chan bool
-
-//CaptureScreenMust xxx
-func CaptureScreenMust() *image.RGBA {
-	img, err := screenshot.CaptureScreen()
+//CaptureScreen xxx
+func CaptureScreen(rect image.Rectangle) *image.RGBA {
+	img, err := screenshot.CaptureRect(rect)
 	errN := 0
 	for err != nil {
-		fmt.Printf("CaptureWindowMust Error: %v", err)
-		img, err = screenshot.CaptureScreen()
+		fmt.Printf("CaptureScreen Error: %v", err)
+		img, err = screenshot.CaptureRect(rect)
 		time.Sleep(time.Duration(10)*time.Millisecond + time.Duration(errN*50)*time.Millisecond)
 		if errN < 20 {
 			errN++
@@ -32,24 +32,23 @@ func CaptureScreenMust() *image.RGBA {
 	return img
 }
 
-//StartShot xxx
-func StartShot() {
-	Images = make(chan *bytes.Buffer, 10)
+//Start xxx
+func (st *Shooter) Start(displayindex int) {
+	bounds := screenshot.GetDisplayBounds(displayindex)
 	stdInterval := float64(1.0 / float64(Config.FPS))
 	timeToSleep := stdInterval
 	s := time.Now()
-	Done = make(chan bool, 1)
 	for {
 		select {
-		case <-Done:
+		case <-st.Done:
 			return
 		default:
 		}
-		img := CaptureScreenMust()
+		img := CaptureScreen(bounds)
 		sio := bytes.NewBufferString("")
 		err := jpeg.Encode(sio, img, &jpeg.Options{Quality: Config.Quality})
 		if err == nil {
-			Images <- sio
+			st.Images <- sio
 		}
 		ss := time.Now()
 		interval := ss.Sub(s)
@@ -69,8 +68,8 @@ func StartShot() {
 
 }
 
-//Stopshot xxx
-func Stopshot(ctx context.Context) error {
-	Done <- true
+//Stop xxx
+func (st *Shooter) Stop(ctx context.Context) error {
+	st.Done <- true
 	return nil
 }
