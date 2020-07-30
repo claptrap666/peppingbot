@@ -1,11 +1,9 @@
 package core
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"image"
-	"image/jpeg"
 	"time"
 
 	screenshot "github.com/kbinani/screenshot"
@@ -13,7 +11,7 @@ import (
 
 //Shooter xxx
 type Shooter struct {
-	Images chan *bytes.Buffer
+	Images chan *image.RGBA
 	Done   chan bool
 }
 
@@ -35,7 +33,7 @@ func CaptureScreen(rect image.Rectangle) *image.RGBA {
 //Start xxx
 func (st *Shooter) Start(displayindex int) {
 	bounds := screenshot.GetDisplayBounds(displayindex)
-	stdInterval := float64(1.0 / float64(Config.FPS))
+	stdInterval := float64(1.0 / float64(Config.Screen.FPS))
 	timeToSleep := stdInterval
 	s := time.Now()
 	for {
@@ -45,17 +43,13 @@ func (st *Shooter) Start(displayindex int) {
 		default:
 		}
 		img := CaptureScreen(bounds)
-		sio := bytes.NewBufferString("")
-		err := jpeg.Encode(sio, img, &jpeg.Options{Quality: Config.Quality})
-		if err == nil {
-			st.Images <- sio
-		}
+		st.Images <- img
 		ss := time.Now()
 		interval := ss.Sub(s)
 		if interval.Seconds() < stdInterval {
-			timeToSleep += float64(Config.Alpha) * timeToSleep / float64(100)
+			timeToSleep += float64(Config.Screen.Alpha) * timeToSleep / float64(100)
 		} else {
-			timeToSleep -= float64(Config.Alpha) * timeToSleep / float64(100)
+			timeToSleep -= float64(Config.Screen.Alpha) * timeToSleep / float64(100)
 		}
 		if timeToSleep < float64(0) {
 			timeToSleep = float64(0)

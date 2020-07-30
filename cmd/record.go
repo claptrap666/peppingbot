@@ -16,8 +16,8 @@ limitations under the License.
 package cmd
 
 import (
-	"bytes"
 	"fmt"
+	"image"
 	"os"
 	"os/signal"
 	"syscall"
@@ -33,17 +33,14 @@ var recordCmd = &cobra.Command{
 	Use:   "record",
 	Short: "start to record screen stop to afile",
 	Run: func(cmd *cobra.Command, args []string) {
-		core.Config.FPS = 30
-		core.Config.Alpha = 15
-		core.Config.Quality = 75
 		n := screenshot.NumActiveDisplays()
 		var done [10]chan bool
-		var images [10]chan *bytes.Buffer
+		var images [10]chan *image.RGBA
 		var shooters [10]*core.Shooter
 		var converters [10]*core.FileConvertor
 		for i := 0; i < n; i++ {
 			done[i] = make(chan bool, 1)
-			images[i] = make(chan *bytes.Buffer, 10)
+			images[i] = make(chan *image.RGBA, 10)
 			shooters[i] = &core.Shooter{
 				Images: images[i],
 				Done:   done[i],
@@ -52,7 +49,6 @@ var recordCmd = &cobra.Command{
 				Src:  images[i],
 				Done: done[i],
 			}
-			converters[i].Init(fmt.Sprintf("test%d.avi", i))
 			go func(index int) {
 				shooters[index].Start(index)
 			}(i)

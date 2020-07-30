@@ -1,2 +1,4 @@
-dist/
+dist/**
 *.avi
+__debug_bin
+data/**

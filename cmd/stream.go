@@ -17,11 +17,13 @@ package cmd
 
 import (
 	"fmt"
+	"image"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
+	"github.com/kbinani/screenshot"
 	"github.com/spf13/cobra"
 	"gitlab.eazytec-cloud.com/zhanglv/peepingbot/core"
 )
@@ -31,18 +33,39 @@ var streamCmd = &cobra.Command{
 	Use:   "stream",
 	Short: "stream screen as rtmp",
 	Run: func(cmd *cobra.Command, args []string) {
-		core.Config.FPS = 30
-		core.Config.Alpha = 15
-		core.Config.Quality = 75
-		go func() {
-			//TODO: start shooter
-		}()
+		n := screenshot.NumActiveDisplays()
+		var done [10]chan bool
+		var images [10]chan *image.RGBA
+		var shooters [10]*core.Shooter
+		var converters [10]*core.RtmpConverter
+		for i := 0; i < n; i++ {
+			done[i] = make(chan bool, 1)
+			images[i] = make(chan *image.RGBA, 10)
+			shooters[i] = &core.Shooter{
+				Images: images[i],
+				Done:   done[i],
+			}
+			converters[i] = &core.RtmpConverter{
+				Src:  images[i],
+				Done: done[i],
+			}
+			go func(index int) {
+				shooters[index].Start(index)
+			}(i)
+			go func(index int) {
+				converters[index].Start(index)
+			}(i)
+		}
+
 		sigs := make(chan os.Signal, 1)
 		signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 		for {
 			select {
 			case <-sigs:
 				fmt.Println("begin shutdown......")
+				for i := 0; i < n; i++ {
+					done[i] <- true
+				}
 				time.Sleep(5 * time.Second)
 				os.Exit(0)
 			default:
